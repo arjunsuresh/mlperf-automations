@@ -1,11 +1,10 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# Run MLPerf inference Retinanet
 
 name: MLPerf inference retinanet
 
 on:
   pull_request_target:
-    branches: [ "main", "dev", "mlperf-inference" ]
+    branches: [ "main", "dev" ]
     paths:
       - '.github/workflows/test-mlperf-inference-retinanet.yml'
       - '**'
@@ -39,10 +38,18 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         git config --system core.longpaths true
-    - name: Install dependencies
+    - name: Install cm4mlops on Windows
+      if: matrix.os == 'windows-latest'
       run: |
-        python3 -m pip install "cmind @ git+https://git@github.com/mlcommons/ck.git@mlperf-inference#subdirectory=cm"
+        $env:CM_PULL_DEFAULT_MLOPS_REPO = "no"; pip install cm4mlops
+    - name: Install dependencies on Unix Platforms
+      if: matrix.os != 'windows-latest'
+      run: |
+        CM_PULL_DEFAULT_MLOPS_REPO=no pip install cm4mlops
+    - name: Pull MLOps repo
+      run: |
         cm pull repo --url=${{ github.event.pull_request.head.repo.html_url }} --checkout=${{ github.event.pull_request.head.ref }}
+
     - name: Test MLPerf Inference Retinanet using ${{ matrix.backend }} on ${{ matrix.os }}
       if: matrix.os == 'windows-latest'
       run: |
